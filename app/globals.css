@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root { --ink:#111613; --paper:#f4f1e8; --acid:#d9ff43; --muted:#69706b; --line:#c9ccc4; }
+:root { --ink:#111613; --paper:#f4f1e8; --acid:#d9ff43; --muted:#69706b; --line:#c9ccc4; --font-geist-sans:Arial,Helvetica,sans-serif; --font-geist-mono:"Courier New",monospace; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
 body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-geist-sans), Arial, sans-serif; }
@@ -46,6 +46,15 @@ h1 em { font-family:Georgia,serif; font-weight:400; color:#657c13; }
 .problemGrid .sectionLabel { color:var(--acid); }
 .problemGrid h2,.deliverables h2,.fit h2,.closing h2 { margin:0; font-size:clamp(40px,5.5vw,72px); line-height:.98; letter-spacing:-.055em; }
 .problemGrid>p:last-child { margin:0; font-size:20px; line-height:1.55; color:#c8ceca; }
+.auditFormSection { padding:100px 0; display:grid; grid-template-columns:1fr 1fr; gap:32px 80px; align-items:start; }
+.auditFormSection h2 { margin:0; font-size:clamp(40px,5.5vw,70px); line-height:.95; letter-spacing:-.06em; }
+.auditFormSection>p:not(.sectionLabel) { margin:0; max-width:520px; font-size:19px; line-height:1.5; color:#555e58; }
+.qualifyForm { grid-column:1/-1; display:grid; grid-template-columns:repeat(3,1fr); gap:15px; padding:25px; background:#e8ff91; border:1px solid var(--ink); }
+.qualifyForm label { display:flex; flex-direction:column; gap:7px; font:700 11px var(--font-geist-mono),monospace; text-transform:uppercase; letter-spacing:.06em; }
+.qualifyForm input { width:100%; min-height:48px; border:1px solid var(--ink); background:#fffdf7; padding:12px; font:500 16px var(--font-geist-sans),sans-serif; text-transform:none; letter-spacing:normal; }
+.qualifyForm button { justify-content:center; grid-column:1/-1; cursor:pointer; font:750 16px var(--font-geist-sans),sans-serif; }
+.qualifyForm button:disabled { opacity:.65; cursor:wait; }
+.formFine,.formError { margin:0; grid-column:1/-1; font-size:13px; }.formFine a{text-decoration:underline;font-weight:700}.formError{color:#a11;font-weight:700}
 .deliverables { padding:100px 0; }
 .cards { display:grid; grid-template-columns:repeat(3,1fr); margin-top:32px; border:1px solid var(--ink); }
 .cards article { min-height:310px; padding:28px; border-right:1px solid var(--ink); display:flex; flex-direction:column; }
@@ -71,9 +80,10 @@ details p { max-width:700px; color:#555e58; line-height:1.6; }
 .closingInner { padding:100px 20px; display:flex; align-items:center; flex-direction:column; }
 .closing h2 { margin:18px 0 10px; }.closing p{font-size:21px}.closing .primary{margin-top:20px}.closing small{margin-top:16px;color:#e4ebca}
 footer { min-height:120px; display:flex; align-items:center; justify-content:space-between; gap:30px; font-size:13px; }
+.planPage { min-height:100vh; padding:38px max(24px,calc((100vw - 1080px)/2)); background:var(--paper); }.planPage>div{max-width:850px;margin-top:18vh}.planPage h1{font-size:clamp(48px,8vw,100px);max-width:900px}.planPage>div>p:not(.sectionLabel){max-width:680px;font-size:22px;line-height:1.5}.planPage .primary{margin-top:22px}
 @media(max-width:760px){
   .navCta{font-size:0}.navCta:after{content:"Get it — $100";font-size:13px}.hero{padding-top:48px}.heroActions{align-items:flex-start;flex-direction:column}.diagnostic{margin-top:50px;box-shadow:6px 6px 0 var(--ink)}
   .scoreRow{align-items:flex-start;flex-direction:column}.signalGrid,.cards,.included{grid-template-columns:1fr}.signalGrid>div,.cards article,.included div{border-right:0;border-bottom:1px solid var(--line)}.signalGrid>div:last-child,.cards article:last-child,.included div:last-child{border-bottom:0}.cards article{min-height:230px}
-  .problemGrid,.fit{grid-template-columns:1fr;gap:28px}.problemGrid{gap:22px}.fit{gap:45px}footer{padding:35px 0;align-items:flex-start;flex-direction:column}
+  .problemGrid,.fit,.auditFormSection{grid-template-columns:1fr;gap:28px}.problemGrid{gap:22px}.fit{gap:45px}.qualifyForm{grid-template-columns:1fr}footer{padding:35px 0;align-items:flex-start;flex-direction:column}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.navCta:hover,.primary:hover{transform:none}}

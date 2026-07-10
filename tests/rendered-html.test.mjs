@@ -19,9 +19,18 @@ test("server-renders the finished sales page", async () => {
   assert.match(html, /<title>Lead Leak Fix Pack/);
   assert.match(html, /Where are the leads\?/);
   assert.match(html, /Get the \$100 fix pack/);
-  assert.match(html, /https:\/\/buy\.stripe\.com\/fZucN7chm3Lgca3g2zenS10/);
+  assert.match(html, /Website to audit/);
+  assert.match(html, /We can build one for \$250\/month/);
   assert.match(html, /View a sample report/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Starter Project/);
+});
+
+test("screens no-site buyers into the website plan", async () => {
+  const response = await render("/website-plan");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /\$250\/month/);
+  assert.match(html, /Request my website/);
 });
 
 test("ships the proof sample and removes disposable preview files", async () => {

@@ -1,0 +1,3 @@
+export default function WebsitePlan() {
+  return <main className="planPage"><a className="brand" href="/">LEAD<span>/</span>LEAK</a><div><p className="sectionLabel">No site? Start here.</p><h1>We’ll build the page your business needs.</h1><p>A focused lead-generation website, hosting, updates, and conversion improvements for <strong>$250/month</strong>. No audit purchase required.</p><a className="primary" href="mailto:alex@orbitboyzz.me?subject=I%20need%20a%20website%20for%20%24250%2Fmonth">Request my website <span>→</span></a><p className="micro">Tell us your business name, service area, and the one action you want visitors to take.</p></div></main>;
+}

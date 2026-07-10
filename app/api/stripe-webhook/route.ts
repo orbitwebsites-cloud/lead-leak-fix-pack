@@ -7,6 +7,7 @@ type StripeCheckoutSession = {
   payment_status?: string;
   customer_details?: { email?: string | null; name?: string | null } | null;
   custom_fields?: Array<{ key?: string; text?: { value?: string | null } | null }> | null;
+  metadata?: Record<string, string> | null;
 };
 
 type StripeEvent = {
@@ -46,10 +47,39 @@ async function verifyStripeSignature(payload: string, signature: string | null, 
 }
 
 function getWebsiteUrl(session: StripeCheckoutSession) {
-  return session.custom_fields?.find((field) => field.key === "website_url")?.text?.value?.trim() || "the website URL supplied at checkout";
+  return session.metadata?.website_url || session.custom_fields?.find((field) => field.key === "website_url")?.text?.value?.trim() || "";
 }
 
-async function sendOrderEmail({ email, name, websiteUrl, orderId }: { email: string; name?: string | null; websiteUrl: string; orderId: string }) {
+function isPublicWebsite(urlString: string) {
+  try {
+    const url = new URL(urlString);
+    const host = url.hostname.toLowerCase();
+    return /^https?:$/.test(url.protocol) && host !== "localhost" && !host.startsWith("127.") && !host.startsWith("10.") && !host.startsWith("192.168.") && !host.startsWith("169.254.");
+  } catch { return false; }
+}
+
+function websiteText(html: string) {
+  return html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<noscript[\s\S]*?<\/noscript>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim().slice(0, 12000);
+}
+
+function htmlEscape(value: string) { return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" })[character] || character); }
+
+async function generateAudit(websiteUrl: string) {
+  const apiKey = process.env.CEREBRAS_API_KEY;
+  if (!apiKey || !isPublicWebsite(websiteUrl)) throw new Error("Audit generation is unavailable");
+  const siteResponse = await fetch(websiteUrl, { headers: { "user-agent": "LeadLeakAudit/1.0 (+https://lead-leak-fix-pack.vkktask.chatgpt.site)" }, signal: AbortSignal.timeout(12000) });
+  if (!siteResponse.ok) throw new Error("The submitted website could not be retrieved");
+  const pageText = websiteText(await siteResponse.text());
+  if (!pageText) throw new Error("The submitted website had no readable public content");
+  const prompt = `You are auditing a public business website for lead generation. Use ONLY the provided page text. Do not claim to have seen analytics, rankings, mobile behavior, or facts not explicitly in the page text. Be concrete, concise, constructive, and honest. Return plain text with these headings exactly: EXECUTIVE DIAGNOSIS, TOP 5 FIXES, REPLACEMENT HERO, FAQ IDEAS, IMPLEMENTATION ORDER, LIMITS. Under TOP 5 FIXES, each finding must include observed evidence, impact, and a specific fix. Under REPLACEMENT HERO give headline, supporting copy, CTA, and trust line. In LIMITS state this is an AI-assisted review of public content and does not guarantee performance.\n\nWEBSITE URL: ${websiteUrl}\n\nPUBLIC PAGE TEXT:\n${pageText}`;
+  const response = await fetch("https://api.cerebras.ai/v1/chat/completions", { method: "POST", headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" }, body: JSON.stringify({ model: "gpt-oss-120b", messages: [{ role: "user", content: prompt }], max_completion_tokens: 1700, temperature: 0.35 }) });
+  const result = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const audit = result.choices?.[0]?.message?.content?.trim();
+  if (!response.ok || !audit) throw new Error("The AI audit could not be generated");
+  return audit;
+}
+
+async function sendOrderEmail({ email, name, websiteUrl, orderId, audit }: { email: string; name?: string | null; websiteUrl: string; orderId: string; audit: string }) {
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
   const senderName = process.env.BREVO_SENDER_NAME || "Lead Leak";
@@ -63,10 +93,10 @@ async function sendOrderEmail({ email, name, websiteUrl, orderId }: { email: str
       sender: { email: senderEmail, name: senderName },
       to: [{ email, name: name || undefined }],
       replyTo: { email: senderEmail, name: senderName },
-      subject: "We received your Lead Leak Fix Pack order",
-      textContent: `Hi ${safeName},\n\nYour order is confirmed. We received this website to review: ${websiteUrl}\n\nYour Lead Leak Fix Pack will be delivered to this email within 24 hours. It includes prioritized conversion findings, replacement hero and CTA copy, FAQ content, and an implementation order.\n\nOrder reference: ${orderId}\n\nLead Leak`,
-      htmlContent: `<html><body style="font-family:Arial,sans-serif;color:#111613;line-height:1.55"><h1 style="font-size:24px">Order confirmed</h1><p>Hi ${safeName},</p><p>We received your website to review:</p><p><a href="${websiteUrl}">${websiteUrl}</a></p><p>Your <strong>Lead Leak Fix Pack</strong> will be delivered to this email within 24 hours. It includes prioritized conversion findings, replacement hero and CTA copy, FAQ content, and an implementation order.</p><p style="color:#69706b;font-size:13px">Order reference: ${orderId}</p></body></html>`,
-      tags: ["lead-leak-order-confirmation"],
+      subject: "Your Lead Leak Fix Pack is ready",
+      textContent: `Hi ${safeName},\n\nHere is your AI-assisted Lead Leak Fix Pack for ${websiteUrl}.\n\n${audit}\n\nOrder reference: ${orderId}\n\nThis review is based on public page content and does not guarantee traffic, leads, sales, rankings, or revenue.`,
+      htmlContent: `<html><body style="font-family:Arial,sans-serif;color:#111613;line-height:1.55"><h1 style="font-size:24px">Your Lead Leak Fix Pack</h1><p>Hi ${htmlEscape(safeName)},</p><p>AI-assisted review of <a href="${htmlEscape(websiteUrl)}">${htmlEscape(websiteUrl)}</a></p><div style="white-space:pre-wrap;background:#f4f1e8;padding:24px;border:1px solid #c9ccc4">${htmlEscape(audit)}</div><p style="color:#69706b;font-size:13px">Order reference: ${htmlEscape(orderId)}<br/>This review is based on public page content and does not guarantee traffic, leads, sales, rankings, or revenue.</p></body></html>`,
+      tags: ["lead-leak-audit-delivery"],
       headers: { "idempotencyKey": `lead-leak-${orderId}` },
     }),
   });
@@ -84,7 +114,7 @@ export async function POST(request: Request) {
 
   const event = JSON.parse(rawBody) as StripeEvent;
   const session = event.data?.object;
-  if (event.type !== "checkout.session.completed" || !session || session.payment_link !== PAYMENT_LINK_ID || session.payment_status !== "paid") {
+  if (event.type !== "checkout.session.completed" || !session || (session.payment_link !== PAYMENT_LINK_ID && session.metadata?.offer !== "lead_leak_ai_audit_v2") || session.payment_status !== "paid") {
     return Response.json({ received: true, handled: false });
   }
 
@@ -92,7 +122,9 @@ export async function POST(request: Request) {
   if (!email) return Response.json({ error: "Paid checkout did not include an email" }, { status: 422 });
 
   try {
-    await sendOrderEmail({ email, name: session.customer_details?.name, websiteUrl: getWebsiteUrl(session), orderId: session.id });
+    const websiteUrl = getWebsiteUrl(session);
+    const audit = await generateAudit(websiteUrl);
+    await sendOrderEmail({ email, name: session.metadata?.lead_name || session.customer_details?.name, websiteUrl, orderId: session.id, audit });
     return Response.json({ received: true, handled: true });
   } catch (error) {
     console.error("Could not send order email", error);

@@ -1,4 +1,4 @@
-const checkoutUrl = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK || "https://buy.stripe.com/fZucN7chm3Lgca3g2zenS10";
+import { QualifiedCheckoutForm } from "./components/QualifiedCheckoutForm";
 
 const fixes = [
   {
@@ -25,7 +25,7 @@ export default function Home() {
         <a className="brand" href="#top" aria-label="Lead Leak Fix Pack home">
           LEAD<span>/</span>LEAK
         </a>
-        <a className="navCta" href={checkoutUrl}>Get the fix pack — $100</a>
+        <a className="navCta" href="#audit">Get the fix pack — $100</a>
       </header>
 
       <section className="hero shell" id="top">
@@ -35,7 +35,7 @@ export default function Home() {
           Get a sharp, human-reviewed conversion teardown plus the exact copy and fixes to stop losing good prospects.
         </p>
         <div className="heroActions">
-          <a className="primary" href={checkoutUrl}>Fix my lead leaks <span>→</span></a>
+          <a className="primary" href="#audit">Fix my lead leaks <span>→</span></a>
           <a className="secondary" href="/sample-report.html" target="_blank">View a sample report</a>
         </div>
         <p className="micro">One public website · one-time payment · no retainer · no access required</p>
@@ -68,6 +68,13 @@ export default function Home() {
           <h2>Traffic is expensive.<br />Confusion is optional.</h2>
           <p>Most small-business sites do not need a redesign. They need a clearer promise, stronger proof, and one obvious next step. This pack shows you exactly what to change first.</p>
         </div>
+      </section>
+
+      <section className="shell auditFormSection" id="audit">
+        <p className="sectionLabel">Start your audit</p>
+        <h2>Show us the page.<br />Then pay only if you have one.</h2>
+        <p>Enter a public website and we’ll open a secure $100 checkout. No website yet? We’ll point you to a managed build plan instead—no audit charge.</p>
+        <QualifiedCheckoutForm />
       </section>
 
       <section className="shell deliverables" id="deliverables">
@@ -115,7 +122,7 @@ export default function Home() {
           <p className="sectionLabel">One slot. One day.</p>
           <h2>Stop guessing what to fix.</h2>
           <p>Get a prioritized plan and the words to put on the page.</p>
-          <a className="primary light" href={checkoutUrl}>Get the $100 fix pack <span>→</span></a>
+          <a className="primary light" href="#audit">Get the $100 fix pack <span>→</span></a>
           <small>Secure checkout powered by Stripe</small>
         </div>
       </section>
